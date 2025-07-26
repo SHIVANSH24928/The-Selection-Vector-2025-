@@ -1,10 +1,10 @@
-# custom_definitions.py
+
 
 import pandas as pd
 import numpy as np
 from sklearn.base import TransformerMixin, BaseEstimator
 
-# This is the custom class from your notebook
+
 class CountEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, columns=None):
         self.columns = columns
