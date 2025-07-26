@@ -1,0 +1,15 @@
+# requirements.txt
+# Official library versions for the AIRAC 'The Selection Vector' Challenge.
+# All participants must use this file to set up their environment.
+# Command: pip install -r requirements.txt
+
+# Core Data Science & ML
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.1
+joblib==1.4.2
+
+# Gradient Boosting Libraries
+xgboost==2.1.0
+lightgbm==4.4.0
+catboost==1.2.5
