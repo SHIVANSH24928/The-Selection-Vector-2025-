@@ -1,6 +1,6 @@
 # The Selection Vector - Competition Toolkit
 
-This repository contains the official toolkit for all participants of the **The Selection Vector** machine learning competition, hosted by AIRAC. The tools provided here are designed to help you validate your submissions locally and ensure your environment matches our official evaluation server.
+This repository contains the official toolkit for all participants of the **The Selection Vector** machine learning competition, hosted by AI Research, CRISPR. The tools provided here are designed to help you validate your submissions locally and ensure your environment matches our official evaluation server.
 
 ## Getting Started
 
