@@ -5,24 +5,63 @@ import numpy as np
 from sklearn.base import TransformerMixin, BaseEstimator
 
 
-class CountEncoder(BaseEstimator, TransformerMixin):
-    def __init__(self, columns=None):
-        self.columns = columns
-        self.count_maps_ = {}
-
+class FeatureEngineer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
-        X_df = pd.DataFrame(X, columns=self.columns)
-        for col in self.columns:
-            counts = X_df[col].value_counts()
-            self.count_maps_[col] = counts.to_dict()
         return self
 
     def transform(self, X):
-        X_df = pd.DataFrame(X, columns=self.columns).copy()
-        for col in self.columns:
-            # Map known categories; map new ones to 0
-            X_df[col] = X_df[col].map(self.count_maps_).fillna(0)
-        return X_df.values
+        df = X.copy()
+        df['Cement'] = df['Cement_component_1kg_in_a_m3_mixture'].replace(0, 0.0001)
+        df['Water'] = df['Water_component_4kg_in_a_m3_mixture'].replace(0, 0.0001)
+        df['Superplasticizer'] = df['Superplasticizer_component_5kg_in_a_m3_mixture'].replace(0, 0.0001)
 
-def rename_columns(X):
-    return pd.DataFrame(X, columns=[i for i in range(X.shape[1])])
+        df['water_cement_ratio'] = df['Water'] / df['Cement']
+        df['total_binder'] = (
+            df['Cement_component_1kg_in_a_m3_mixture'] +
+            df['Blast_Furnace_Slag_component_2kg_in_a_m3_mixture'] +
+            df['Fly_Ash_component_3kg_in_a_m3_mixture']
+        )
+        df['total_aggregate'] = (
+            df['Coarse_Aggregate_component_6kg_in_a_m3_mixture'] +
+            df['Fine_Aggregate_component_7kg_in_a_m3_mixture']
+        )
+        df['plasticizer_per_cement'] = df['Superplasticizer'] / df['Cement']
+        df['cement_agg_ratio'] = df['Cement'] / df['total_aggregate']
+        df['water_binder_ratio'] = df['Water'] / df['total_binder']
+        df['mix_density'] = (
+            df['Cement_component_1kg_in_a_m3_mixture'] +
+            df['Blast_Furnace_Slag_component_2kg_in_a_m3_mixture'] +
+            df['Fly_Ash_component_3kg_in_a_m3_mixture'] +
+            df['Water'] +
+            df['Superplasticizer'] +
+            df['Coarse_Aggregate_component_6kg_in_a_m3_mixture'] +
+            df['Fine_Aggregate_component_7kg_in_a_m3_mixture']
+        )
+        return df
+
+class LogTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.skewed_cols = [
+            'Age_day',
+            'water_cement_ratio',
+            'Superplasticizer_component_5kg_in_a_m3_mixture',
+            'plasticizer_per_cement',
+            'Blast_Furnace_Slag_component_2kg_in_a_m3_mixture',
+            'cement_agg_ratio',
+            'Fly_Ash_component_3kg_in_a_m3_mixture',
+            'Cement_component_1kg_in_a_m3_mixture'
+        ]
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X_transformed = X.copy()
+        for col in self.skewed_cols:
+            if col in X.columns:
+                if X[col].min() > 0:
+                    X_transformed[col] = np.log1p(X[col])
+                else:
+                    X_transformed[col] = np.log1p(X[col] - X[col].min() + 1)
+        return X_transformed
+
