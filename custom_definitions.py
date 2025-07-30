@@ -104,3 +104,4 @@ def split_columns(df):
             df[parts[1]] = df[col].str[1]
             df.drop(columns=col, inplace=True)
     return df
+
