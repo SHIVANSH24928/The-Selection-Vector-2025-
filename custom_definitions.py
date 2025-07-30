@@ -93,3 +93,23 @@ class RemoveUnusualChars(BaseEstimator, TransformerMixin):
             X_copy[col] = X_copy[col].astype(str).apply(lambda x: re.sub(self.pattern, '', x))
 
         return X_copy
+
+class CompoundColumnSplitter(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.compound_cols = {
+            'feature_8,feature_15': ['feature_8', 'feature_15'],
+            'feature_21,feature_10': ['feature_21', 'feature_10'],
+            'feature_1,feature_6': ['feature_1', 'feature_6']
+        }
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        for col, new_cols in self.compound_cols.items():
+            split_df = X[col].str.split(',', expand=True)
+            split_df.columns = new_cols
+            X[new_cols] = split_df
+            X.drop(columns=[col], inplace=True)
+        return X
