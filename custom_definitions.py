@@ -205,3 +205,16 @@ def fill_missing(df):
     return df.fillna('')
 
 fillna_transformer = FunctionTransformer(fill_missing, validate=False)
+
+
+def replacer(X):
+   X_temp=X.copy()
+   for col in X.columns:
+      X_temp[f"{col}_letters"] = X_temp[col].str.replace(r'[^a-zA-Z]', "", regex=True)
+      X_temp[f"{col}_symbols"] = X_temp[col].str.replace(r'[a-zA-Z0-9]', "", regex=True)
+      X_temp.drop(columns=[col],inplace=True)
+    
+ 
+   return X_temp
+
+custom_replacer=FunctionTransformer(replacer,validate=False)
