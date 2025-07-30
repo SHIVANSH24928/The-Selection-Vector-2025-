@@ -94,6 +94,34 @@ class RemoveUnusualChars(BaseEstimator, TransformerMixin):
 
         return X_copy
 
+
+
+class PipelineWithLabelDecoder:
+    def __init__(self, pipeline, label_encoder):
+        self.pipeline = pipeline
+        self.label_encoder = label_encoder
+
+    def fit(self, X, y):
+        y_encoded = self.label_encoder.fit_transform(y)
+        self.pipeline.fit(X, y_encoded)
+        return self
+
+    def predict(self, X):
+        y_encoded_pred = self.pipeline.predict(X)
+        return self.label_encoder.inverse_transform(y_encoded_pred)
+
+    def predict_proba(self, X):
+        return self.pipeline.predict_proba(X)
+
+    def save(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(filename):
+        with open(filename, 'rb') as f:
+            return pickle.load(f)
+
 class Leela_Venkata_Sai_Nerella(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
@@ -168,5 +196,6 @@ def split_columns(df):
             df[parts[1]] = df[col].str[1]
             df.drop(columns=col, inplace=True)
     return df
+
 
 
