@@ -93,3 +93,4 @@ class RemoveUnusualChars(BaseEstimator, TransformerMixin):
             X_copy[col] = X_copy[col].astype(str).apply(lambda x: re.sub(self.pattern, '', x))
 
         return X_copy
+
