@@ -203,5 +203,12 @@ def split_columns(df):
 def fill_missing(df):
 
     return df.fillna('')
-
+    
+def split_bycomma(X_df):
+    X = X_df.copy()
+    X[['feature_8', 'feature_15']] = X['feature_8,feature_15'].str.split(',', expand=True)
+    X[['feature_21', 'feature_10']] = X['feature_21,feature_10'].str.split(',', expand=True)
+    X[['feature_1', 'feature_6']] = X['feature_1,feature_6'].str.split(',', expand=True)
+    X.drop(['feature_8,feature_15', 'feature_21,feature_10', 'feature_1,feature_6'], axis=1, inplace=True)
+    return X
 fillna_transformer = FunctionTransformer(fill_missing, validate=False)
