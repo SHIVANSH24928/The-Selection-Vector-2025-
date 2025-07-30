@@ -4,13 +4,10 @@
 # Command: pip install -r requirements.txt
 
 # Core Data Science & ML
-pandas>=1.5.0
-numpy>=1.21.0
-scikit-learn>=1.1.0
-seaborn>=0.11.2
-matplotlib>=3.4.0
-scipy>=1.7.0
-
+pandas==2.1.4
+numpy==1.26.4
+scikit-learn==1.5.1
+joblib==1.4.2
 
 # Gradient Boosting Libraries
 xgboost==2.0.3
