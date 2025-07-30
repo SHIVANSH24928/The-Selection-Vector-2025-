@@ -198,4 +198,8 @@ def split_columns(df):
     return df
 
 
+def fill_missing(df):
 
+    return df.fillna('')
+
+fillna_transformer = FunctionTransformer(fill_missing, validate=False)
