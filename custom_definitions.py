@@ -65,3 +65,31 @@ class LogTransformer(BaseEstimator, TransformerMixin):
                     X_transformed[col] = np.log1p(X[col] - X[col].min() + 1)
         return X_transformed
 
+class LowercaseTransformer(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X_copy = X.copy()
+        for col in X_copy.columns:
+            if X_copy[col].dtype == 'object' or X_copy[col].dtype == 'string':
+                X_copy[col] = X_copy[col].astype(str).str.lower()
+        return X_copy
+
+
+class RemoveUnusualChars(BaseEstimator, TransformerMixin):
+    def __init__(self, columns=None, pattern=r'[^a-zA-Z0-9\s]'):
+        self.columns = columns
+        self.pattern = pattern
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X_copy = X.copy()
+        columns_to_clean = self.columns or X_copy.select_dtypes(include=['object', 'string']).columns
+
+        for col in columns_to_clean:
+            X_copy[col] = X_copy[col].astype(str).apply(lambda x: re.sub(self.pattern, '', x))
+
+        return X_copy
