@@ -93,6 +93,7 @@ class RemoveUnusualChars(BaseEstimator, TransformerMixin):
             X_copy[col] = X_copy[col].astype(str).apply(lambda x: re.sub(self.pattern, '', x))
 
         return X_copy
+
 class Leela_Venkata_Sai_Nerella(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
@@ -155,3 +156,17 @@ class Leela_Venkata_Sai_Nerella(BaseEstimator, TransformerMixin):
         # Try converting to numeric where possible
             X[col] = pd.to_numeric(X[col], errors='ignore')  # or use 'coerce' if you want NaNs instead of invalid
         return X
+
+
+
+def split_columns(df):
+    df = df.copy()
+    for col in df.columns:
+        if ',' in col:
+            parts = col.split(',')
+            df[parts[0]] = df[col].str[0]
+            df[parts[1]] = df[col].str[1]
+            df.drop(columns=col, inplace=True)
+    return df
+
+
