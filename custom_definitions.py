@@ -267,3 +267,19 @@ def cluster_df(X):
 def scale_df(X):
     scaler = StandardScaler()
     return scaler.fit_transform(X)
+
+def create_pipeline():
+    top_features = ["feature_18", "feature_1"]
+    custom_feat_eng = CustomFeatureEngineer(top_features=top_features)
+    feature_combiner = FeatureCombiner(top_features=top_features)
+
+    pipeline = Pipeline([
+        ("custom_feature_engineering", custom_feat_eng),
+        ("feature_combination", feature_combiner),
+        ("imputation", FunctionTransformer(impute_df, validate=False)),
+        ("onehot_encode", FunctionTransformer(encode_df, validate=False)),
+        ("clustering", FunctionTransformer(cluster_df, validate=False)),
+        ("scaling", FunctionTransformer(scale_df, validate=False))
+    ])
+
+    return pipeline
