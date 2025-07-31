@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 from itertools import combinations
 from sklearn.pipeline import make_pipeline
 from imblearn.pipeline import Pipeline as ImbPipeline   
+from imblearn.over_sampling import SMOTE   
 
 import re
 
