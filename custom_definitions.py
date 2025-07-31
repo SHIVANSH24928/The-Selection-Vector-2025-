@@ -373,7 +373,47 @@ def create_pipeline():
     return pipeline
 
 
-    
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class Mouryagna_Baindla(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = pd.DataFrame(X).copy()
+        X = self.featuressplit(X)
+        X = self.remove(X)
+        return X
+
+    def featuressplit(self, X):
+        feature1, feature6, feature8 = [], [], []
+        feature10, feature15, feature21 = [], [], []
+        for i in range(len(X)):
+            cell = X.iloc[i, -1]
+            a, b = self.safe_split(cell)
+            feature1.append(a)
+            feature6.append(b)
+
+            cell = X.iloc[i, -2]
+            a, b = self.safe_split(cell)
+            feature21.append(a)
+            feature10.append(b)
+
+            cell = X.iloc[i, -3]
+            a, b = self.safe_split(cell)
+            feature8.append(a)
+            feature15.append(b)
+
+        X["feature_1"] = feature1
+        X["feature_6"] = feature6
+        X["feature_8"] = feature8
+        X["feature_10"] = feature10
+        X["feature_15"] = feature15
+        X["feature_21"] = feature21
+
+        X = X.drop(['feature_8,feature_15', 'feature_21,feature_10', 'feature_1,feature_6'], axis=1)
+
+        return X
 
 #================================================================================================================================
 # shrihari telang
@@ -433,3 +473,18 @@ submission_pipeline = ImbPipeline(steps=[
 ])
 #========================================================================================================================================
 
+
+    def remove(self, X):
+        for col in X.columns:
+            X[col] = X[col].astype(str).apply(lambda x: re.sub(r'[^a-zA-Z0-9]', '', x))
+            X[col] = pd.to_numeric(X[col], errors='ignore')  
+        return X
+
+    def safe_split(self, cell):
+        if pd.isna(cell):
+            return np.nan, np.nan
+        try:
+            a, b = str(cell).split(",", 1)
+            return a, b
+        except:
+            return np.nan, np.nan
