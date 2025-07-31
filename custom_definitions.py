@@ -279,6 +279,7 @@ class ImputerWrapper(BaseEstimator, TransformerMixin):
         self.columns = X.columns
         return self
 
+
     def transform(self, X):
         return pd.DataFrame(self.imputer.transform(X), columns=self.columns, index=X.index)
 
@@ -307,6 +308,38 @@ class KMeansClusterWrapper(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         self.kmeans.fit(X)
         return self
+
+
+
+    def transform(self, X):
+        return pd.DataFrame(self.imputer.transform(X), columns=self.columns, index=X.index)
+
+
+class OneHotEncoderWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+
+    def fit(self, X, y=None):
+        self.obj_cols = X.select_dtypes(include="object").columns
+        self.encoder.fit(X[self.obj_cols])
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        encoded = self.encoder.transform(X[self.obj_cols])
+        encoded_df = pd.DataFrame(encoded, columns=self.encoder.get_feature_names_out(self.obj_cols), index=X.index)
+        return pd.concat([X.drop(columns=self.obj_cols), encoded_df], axis=1)
+
+
+class KMeansClusterWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self, n_clusters=5):
+        self.n_clusters = n_clusters
+        self.kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+
+    def fit(self, X, y=None):
+        self.kmeans.fit(X)
+        return self
+
 
     def transform(self, X):
         cluster_labels = self.kmeans.predict(X)
@@ -341,6 +374,7 @@ def create_pipeline():
 
 
     
+
 #================================================================================================================================
 # shrihari telang
 
@@ -398,3 +432,4 @@ submission_pipeline = ImbPipeline(steps=[
     ('classifier', LogisticRegression(C=best_c_value, random_state=42, max_iter=1000))
 ])
 #========================================================================================================================================
+
