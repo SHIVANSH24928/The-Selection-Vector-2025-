@@ -689,3 +689,64 @@ class CompoundColumnSplitter(BaseEstimator, TransformerMixin):
             X.drop(columns=[col], inplace=True)
         return X
 #=======================================================================================
+
+# custom_definitions.py
+
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+import re
+
+class MushroomFeatureCleaner(BaseEstimator, TransformerMixin):
+    """
+    A custom scikit-learn transformer for the mushroom dataset.
+    This transformer performs two key foundational cleaning steps:
+    1.  Splits the three comma-separated feature columns ('feature_8,feature_15', etc.)
+        into six new, individual feature columns.
+    2.  Normalizes all text-based (object) columns to lowercase and strips any
+        leading or trailing whitespace to ensure consistency.
+    """
+    def _init_(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        X_transformed = X.copy()
+        
+        cols_to_split = ['feature_8,feature_15', 'feature_21,feature_10', 'feature_1,feature_6']
+        
+        for combined_col_name in cols_to_split:
+            if combined_col_name in X_transformed.columns:
+                feature1_name, feature2_name = combined_col_name.split(',')
+                split_data = X_transformed[combined_col_name].str.split(',', expand=True, n=1)
+                X_transformed[feature1_name.strip()] = split_data[0]
+                X_transformed[feature2_name.strip()] = split_data[1]
+                X_transformed = X_transformed.drop(columns=[combined_col_name])
+        
+        string_columns = X_transformed.select_dtypes(include=['object']).columns
+        for col in string_columns:
+            X_transformed[col] = X_transformed[col].str.lower().str.strip()
+            
+        return X_transformed
+
+class SymbolCleaner(BaseEstimator, TransformerMixin):
+    """
+    A custom scikit-learn transformer that cleans text features by removing
+    all non-alphanumeric characters. For example, 't@' becomes 't'.
+    """
+    def _init_(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        X_ = X.copy()
+        string_columns = X_.select_dtypes(include=['object']).columns
+        pattern = r'[^a-zA-Z0-9]'
+        
+        for col in string_columns:
+            X_[col] = X_[col].astype(str).str.replace(pattern, '', regex=True)
+            
+        return X_
