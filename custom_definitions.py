@@ -8,6 +8,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.cluster import KMeans
 from itertools import combinations
+from sklearn.pipeline import make_pipeline
 
 import re
 
