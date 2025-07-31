@@ -249,38 +249,70 @@ class FeatureCombiner(BaseEstimator, TransformerMixin):
         X["unique_top_cats"] = X[self.top_features].nunique(axis=1)
         return X
 
-def impute_df(X):
-    imputer = SimpleImputer(strategy="constant")
-    return pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+class ImputerWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.imputer = SimpleImputer(strategy="constant")
 
-def encode_df(X):
-    onehot = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-    obj_cols = X.select_dtypes(include="object").columns
-    encoded = onehot.fit_transform(X[obj_cols])
-    encoded_df = pd.DataFrame(encoded, columns=onehot.get_feature_names_out(obj_cols))
-    return pd.concat([X.drop(columns=obj_cols).reset_index(drop=True), encoded_df.reset_index(drop=True)], axis=1)
+    def fit(self, X, y=None):
+        self.imputer.fit(X)
+        self.columns = X.columns
+        return self
 
-def cluster_df(X):
-    kmeans = KMeans(n_clusters=5, random_state=42)
-    X = X.reset_index(drop=True)
-    return pd.concat([X, pd.Series(kmeans.fit_predict(X), name="cluster_label")], axis=1)
+    def transform(self, X):
+        return pd.DataFrame(self.imputer.transform(X), columns=self.columns, index=X.index)
 
-def scale_df(X):
-    scaler = StandardScaler()
-    return scaler.fit_transform(X)
 
+class OneHotEncoderWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+
+    def fit(self, X, y=None):
+        self.obj_cols = X.select_dtypes(include="object").columns
+        self.encoder.fit(X[self.obj_cols])
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        encoded = self.encoder.transform(X[self.obj_cols])
+        encoded_df = pd.DataFrame(encoded, columns=self.encoder.get_feature_names_out(self.obj_cols), index=X.index)
+        return pd.concat([X.drop(columns=self.obj_cols), encoded_df], axis=1)
+
+
+class KMeansClusterWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self, n_clusters=5):
+        self.n_clusters = n_clusters
+        self.kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+
+    def fit(self, X, y=None):
+        self.kmeans.fit(X)
+        return self
+
+    def transform(self, X):
+        cluster_labels = self.kmeans.predict(X)
+        return pd.concat([X.reset_index(drop=True), pd.Series(cluster_labels, name="cluster_label")], axis=1)
+
+
+class ScalerWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.scaler = StandardScaler()
+
+    def fit(self, X, y=None):
+        self.scaler.fit(X)
+        return self
+
+    def transform(self, X):
+        return self.scaler.transform(X)
+
+
+# --- Full Preprocessing Pipeline ---
 def create_pipeline():
     top_features = ["feature_18", "feature_1"]
-    custom_feat_eng = CustomFeatureEngineer(top_features=top_features)
-    feature_combiner = FeatureCombiner(top_features=top_features)
-
     pipeline = Pipeline([
-        ("custom_feature_engineering", custom_feat_eng),
-        ("feature_combination", feature_combiner),
-        ("imputation", FunctionTransformer(impute_df, validate=False)),
-        ("onehot_encode", FunctionTransformer(encode_df, validate=False)),
-        ("clustering", FunctionTransformer(cluster_df, validate=False)),
-        ("scaling", FunctionTransformer(scale_df, validate=False))
+        ("custom_feature_engineering", CustomFeatureEngineer(top_features=top_features)),
+        ("feature_combination", FeatureCombiner(top_features=top_features)),
+        ("imputation", ImputerWrapper()),
+        ("onehot_encode", OneHotEncoderWrapper()),
+        ("clustering", KMeansClusterWrapper()),
+        ("scaling", ScalerWrapper())
     ])
-
     return pipeline
