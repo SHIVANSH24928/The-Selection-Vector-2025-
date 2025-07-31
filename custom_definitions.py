@@ -105,6 +105,15 @@ class RemoveUnusualChars(BaseEstimator, TransformerMixin):
         return X_copy
 
 
+class CompoundColumnSplitter(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.compound_cols = {
+            'feature_8,feature_15': ['feature_8', 'feature_15'],
+            'feature_21,feature_10': ['feature_21', 'feature_10'],
+            'feature_1,feature_6': ['feature_1', 'feature_6']
+        }
+
+
 
 class PipelineWithLabelDecoder:
     def __init__(self, pipeline, label_encoder):
@@ -582,11 +591,20 @@ class FeatureCombiner(BaseEstimator, TransformerMixin):
     def __init__(self, top_features=None):
         self.top_features = top_features if top_features else []
 
+
     def fit(self, X, y=None):
         return self
 
     def transform(self, X):
         X = X.copy()
+
+        for col, new_cols in self.compound_cols.items():
+            split_df = X[col].str.split(',', expand=True)
+            split_df.columns = new_cols
+            X[new_cols] = split_df
+            X.drop(columns=[col], inplace=True)
+        return X
+
         for f1, f2 in combinations(self.top_features, 2):
             new_col = f"{f1}_{f2}_comb"
             X[new_col] = X[f1].astype(str) + "_" + X[f2].astype(str)
@@ -663,3 +681,4 @@ def create_pipeline():
     return pipeline
 
 #=======================================================================================
+
