@@ -429,60 +429,54 @@ class Mouryagna_Baindla(BaseEstimator, TransformerMixin):
 # shrihari telang
 
 class ColumnSplitter(BaseEstimator, TransformerMixin):
-
-    def __init__(self):
-        pass
-
-    def fit(self, X, y=None):
-        return self
-
+    def fit(self, X, y=None): return self
     def transform(self, X, y=None):
         X_copy = X.copy()
-        
         if 'feature_8,feature_15' in X_copy.columns:
             split_df = X_copy['feature_8,feature_15'].str.split(',', expand=True)
-            X_copy['feature_8'] = split_df[0]
-            X_copy['feature_15'] = split_df[1]
+            X_copy['feature_8'], X_copy['feature_15'] = split_df[0], split_df[1]
             X_copy = X_copy.drop(columns=['feature_8,feature_15'])
-        
         if 'feature_21,feature_10' in X_copy.columns:
             split_df = X_copy['feature_21,feature_10'].str.split(',', expand=True)
-            X_copy['feature_21'] = split_df[0]
-            X_copy['feature_10'] = split_df[1]
+            X_copy['feature_21'], X_copy['feature_10'] = split_df[0], split_df[1]
             X_copy = X_copy.drop(columns=['feature_21,feature_10'])
-        
         if 'feature_1,feature_6' in X_copy.columns:
             split_df = X_copy['feature_1,feature_6'].str.split(',', expand=True)
-            X_copy['feature_1'] = split_df[0]
-            X_copy['feature_6'] = split_df[1]
+            X_copy['feature_1'], X_copy['feature_6'] = split_df[0], split_df[1]
             X_copy = X_copy.drop(columns=['feature_1,feature_6'])
         return X_copy
 
 class FeatureSelector(BaseEstimator, TransformerMixin):
-
     def __init__(self, columns_to_keep):
         self.columns_to_keep = columns_to_keep
-
-    def fit(self, X, y=None):
-        return self
-
+    def fit(self, X, y=None): return self
     def transform(self, X, y=None):
         return X[self.columns_to_keep]
+
+
+class PipelineWrapper:
+    def __init__(self, pipeline, label_encoder):
+        self.pipeline = pipeline
+        self.label_encoder = label_encoder
+
+    def predict(self, X):
+        numeric_predictions = self.pipeline.predict(X)
+        string_predictions = self.label_encoder.inverse_transform(numeric_predictions)
+        return string_predictions
     
 top_10_features = [
     'feature_9', 'feature_6', 'feature_12', 'feature_15', 'feature_18',
     'feature_3', 'feature_14', 'feature_20', 'feature_17', 'feature_4'
 ]
-
 best_c_value = 10
 
-submission_pipeline = ImbPipeline(steps=[
-   
+
+core_pipeline = ImbPipeline(steps=[
     ('splitter', ColumnSplitter()),
-    ('selector', FeatureSelector(columns_to_keep=top_10_features)),
+    ('selector', FeatureSelector(columns_to_keep=top_10_features)),    # STEP 2: Impute missing values. Output is a NumPy array.
     ('imputer', SimpleImputer(strategy='most_frequent')),
     ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False)),
-    ('scaler', StandardScaler()), 
+    ('scaler', StandardScaler()),
     ('smote', SMOTE(random_state=42)),
     ('classifier', LogisticRegression(C=best_c_value, random_state=42, max_iter=1000))
 ])
