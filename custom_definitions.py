@@ -738,9 +738,20 @@ class SymbolCleaner(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         X_ = X.copy()
         string_columns = X_.select_dtypes(include=['object']).columns
-        pattern = r'[^a-zA-Z0-9]'
+
+
+class ManualInteractionFeatures(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X.copy()['f8_f15'] = X.copy()['feature_8'].astype(str) + "_" + X.copy()['feature_15'].astype(str)
+        X.copy()['f21_f10'] = X.copy()['feature_21'].astype(str) + "_" + X.copy()['feature_10'].astype(str)
+        X.copy()['f1_f6'] = X.copy()['feature_1'].astype(str) + "_" + X.copy()['feature_6'].astype(str)
+        X.copy()['f2_f3'] = X.copy()['feature_2'].astype(str) + "_" + X.copy()['feature_3'].astype(str)
+        X.copy()['f12_f13'] = X.copy()['feature_12'].astype(str) + "_" + X.copy()['feature_13'].astype(str)
+
+        return X.copy()
         
-        for col in string_columns:
-            X_[col] = X_[col].astype(str).str.replace(pattern, '', regex=True)
-            
-        return X_
+        
+        
