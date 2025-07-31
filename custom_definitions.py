@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 import numpy as np
 from sklearn.base import TransformerMixin, BaseEstimator
@@ -8,7 +6,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.cluster import KMeans
 from itertools import combinations
-
 import re
 
 
@@ -144,19 +141,16 @@ class Leela_Venkata_Sai_Nerella(BaseEstimator, TransformerMixin):
         feature10, feature15, feature21 = [], [], []
 
         for i in range(len(X)):
-            # Last column: feature_1 and feature_6
             cell = X.iloc[i, -1]
             a, b = self.safe_split(cell)
             feature1.append(a)
             feature6.append(b)
 
-            # Second last column: feature_21 and feature_10
             cell = X.iloc[i, -2]
             a, b = self.safe_split(cell)
             feature21.append(a)
             feature10.append(b)
 
-            # Third last column: feature_8 and feature_15
             cell = X.iloc[i, -3]
             a, b = self.safe_split(cell)
             feature8.append(a)
@@ -169,7 +163,6 @@ class Leela_Venkata_Sai_Nerella(BaseEstimator, TransformerMixin):
         X["feature_15"] = feature15
         X["feature_21"] = feature21
 
-        # Drop last 3 columns (which were split)
         X = X.drop(['feature_8,feature_15', 'feature_21,feature_10', 'feature_1,feature_6'], axis=1)
 
         return X
@@ -205,7 +198,6 @@ def split_columns(df):
 
 
 def fill_missing(df):
-
     return df.fillna('')
     
 def split_bycomma(X_df):
@@ -304,4 +296,56 @@ def create_pipeline():
     ])
 
     return pipeline
+#===============================================================================================================================
+# shrihari telag
+class ColumnSplitter(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
 
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        X_copy = X.copy()
+        
+        if 'feature_8,feature_15' in X_copy.columns:
+            split_df = X_copy['feature_8,feature_15'].str.split(',', expand=True)
+            X_copy['feature_8'] = split_df[0]
+            X_copy['feature_15'] = split_df[1]
+            X_copy = X_copy.drop(columns=['feature_8,feature_15'])
+        
+        if 'feature_21,feature_10' in X_copy.columns:
+            split_df = X_copy['feature_21,feature_10'].str.split(',', expand=True)
+            X_copy['feature_21'] = split_df[0]
+            X_copy['feature_10'] = split_df[1]
+            X_copy = X_copy.drop(columns=['feature_21,feature_10'])
+        
+        if 'feature_1,feature_6' in X_copy.columns:
+            split_df = X_copy['feature_1,feature_6'].str.split(',', expand=True)
+            X_copy['feature_1'] = split_df[0]
+            X_copy['feature_6'] = split_df[1]
+            X_copy = X_copy.drop(columns=['feature_1,feature_6'])
+        return X_copy
+
+class FeatureSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, columns_to_keep):
+        self.columns_to_keep = columns_to_keep
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X[self.columns_to_keep]
+    
+
+submission_pipeline = ImbPipeline(steps=[
+   
+    ('splitter', ColumnSplitter()),
+    ('selector', FeatureSelector(columns_to_keep=top_10_features)),
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False)),
+    ('scaler', StandardScaler()), 
+    ('smote', SMOTE(random_state=42)),
+    ('classifier', LogisticRegression(C=best_c_value, random_state=42, max_iter=1000))
+])
+#=======================================================================================================================
