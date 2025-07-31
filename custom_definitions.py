@@ -1,5 +1,4 @@
 
-
 import pandas as pd
 import numpy as np
 from sklearn.base import TransformerMixin, BaseEstimator
@@ -489,4 +488,52 @@ submission_pipeline = ImbPipeline(steps=[
             return a, b
         except:
             return np.nan, np.nan
+
+
+#===========yash_verdhan========================================
+
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+
+
+
+class MushroomFeatureCleaner(BaseEstimator, TransformerMixin):
+
+    def _init_(self):
+        pass
+
+    def fit(self, X, y=None):
+
+        return self
+
+    def transform(self, X, y=None):
+
+        X_transformed = X.copy()
+        
+
+        cols_to_split = ['feature_8,feature_15', 'feature_21,feature_10', 'feature_1,feature_6']
+        
+        for combined_col_name in cols_to_split:
+            
+            if combined_col_name in X_transformed.columns:
+                
+                
+                feature1_name, feature2_name = combined_col_name.split(',')
+                
+               
+                split_data = X_transformed[combined_col_name].str.split(',', expand=True, n=1)
+                
+                
+                X_transformed[feature1_name.strip()] = split_data[0]
+                X_transformed[feature2_name.strip()] = split_data[1]
+                
+                
+                X_transformed = X_transformed.drop(columns=[combined_col_name])
+        
+
+        string_columns = X_transformed.select_dtypes(include=['object']).columns
+        for col in string_columns:
+            X_transformed[col] = X_transformed[col].str.lower().str.strip()
+            
+        return X_transformed
 
