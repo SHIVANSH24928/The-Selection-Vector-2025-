@@ -481,13 +481,13 @@ submission_pipeline = ImbPipeline(steps=[
 #========================================================================================================================================
 
 
-    def remove(self, X):
+def remove(self, X):
         for col in X.columns:
             X[col] = X[col].astype(str).apply(lambda x: re.sub(r'[^a-zA-Z0-9]', '', x))
             X[col] = pd.to_numeric(X[col], errors='ignore')  
         return X
 
-    def safe_split(self, cell):
+def safe_split(self, cell):
         if pd.isna(cell):
             return np.nan, np.nan
         try:
