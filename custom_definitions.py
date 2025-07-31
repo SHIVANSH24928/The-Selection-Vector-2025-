@@ -459,7 +459,12 @@ class FeatureSelector(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return X[self.columns_to_keep]
     
+top_10_features = [
+    'feature_9', 'feature_6', 'feature_12', 'feature_15', 'feature_18',
+    'feature_3', 'feature_14', 'feature_20', 'feature_17', 'feature_4'
+]
 
+best_c_value = 10
 
 submission_pipeline = ImbPipeline(steps=[
    
@@ -471,6 +476,8 @@ submission_pipeline = ImbPipeline(steps=[
     ('smote', SMOTE(random_state=42)),
     ('classifier', LogisticRegression(C=best_c_value, random_state=42, max_iter=1000))
 ])
+
+
 #========================================================================================================================================
 
 
