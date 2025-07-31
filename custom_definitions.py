@@ -4,6 +4,11 @@ import pandas as pd
 import numpy as np
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import FunctionTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.cluster import KMeans
+from itertools import combinations
+
 import re
 
 
@@ -183,8 +188,7 @@ class Leela_Venkata_Sai_Nerella(BaseEstimator, TransformerMixin):
     def remove(self, X):
         for col in X.columns:
             X[col] = X[col].astype(str).apply(lambda x: re.sub(r'[^a-zA-Z0-9]', '', x))
-        # Try converting to numeric where possible
-            X[col] = pd.to_numeric(X[col], errors='ignore')  # or use 'coerce' if you want NaNs instead of invalid
+            X[col] = pd.to_numeric(X[col], errors='ignore')  
         return X
 
 
@@ -205,3 +209,61 @@ def fill_missing(df):
     return df.fillna('')
 
 fillna_transformer = FunctionTransformer(fill_missing, validate=False)
+
+
+class CustomFeatureEngineer(BaseEstimator, TransformerMixin):
+    def __init__(self, top_features=None):
+        self.top_features = top_features if top_features else []
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        X[['feature_8', 'feature_15']] = X['feature_8,feature_15'].str.split(",", expand=True)
+        X[['feature_21', 'feature_10']] = X['feature_21,feature_10'].str.split(",", expand=True)
+        X[['feature_1', 'feature_6']] = X['feature_1,feature_6'].str.split(",", expand=True)
+        X.drop(['feature_8,feature_15', 'feature_21,feature_10', 'feature_1,feature_6'], axis=1, inplace=True)
+
+        string_cols = X.select_dtypes(include='object').columns
+        for col in string_cols:
+            X[col] = X[col].str.lower().str.strip()
+
+        return X
+
+class FeatureCombiner(BaseEstimator, TransformerMixin):
+    def __init__(self, top_features=None):
+        self.top_features = top_features if top_features else []
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        for f1, f2 in combinations(self.top_features, 2):
+            new_col = f"{f1}_{f2}_comb"
+            X[new_col] = X[f1].astype(str) + "_" + X[f2].astype(str)
+
+        X["count_U"] = (X[self.top_features] == "U").sum(axis=1)
+        X["unique_top_cats"] = X[self.top_features].nunique(axis=1)
+        return X
+
+def impute_df(X):
+    imputer = SimpleImputer(strategy="constant")
+    return pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+
+def encode_df(X):
+    onehot = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    obj_cols = X.select_dtypes(include="object").columns
+    encoded = onehot.fit_transform(X[obj_cols])
+    encoded_df = pd.DataFrame(encoded, columns=onehot.get_feature_names_out(obj_cols))
+    return pd.concat([X.drop(columns=obj_cols).reset_index(drop=True), encoded_df.reset_index(drop=True)], axis=1)
+
+def cluster_df(X):
+    kmeans = KMeans(n_clusters=5, random_state=42)
+    X = X.reset_index(drop=True)
+    return pd.concat([X, pd.Series(kmeans.fit_predict(X), name="cluster_label")], axis=1)
+
+def scale_df(X):
+    scaler = StandardScaler()
+    return scaler.fit_transform(X)
